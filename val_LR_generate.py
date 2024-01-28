@@ -30,7 +30,11 @@ _interpolation_mode = {
 }
 
 
-def main(outdir: Path = Path("tmp/lr"), reduction_scale: float = 4.0, subset: str = "valid", mode: str = "nearest"):
+def main(outdir: str = "tmp/lr", reduction_scale: float = 4.0, subset: str = "valid", mode: str = "nearest"):
+    outdir = Path(outdir)
+    if not outdir.is_dir():
+        outdir.mkdir(parents=True, exist_ok=True)
+
     dataset = Path(dsdir) / "DIV2K" / f"DIV2K_{subset}_HR"
 
     for image_path in dataset.iterdir():
@@ -42,10 +46,7 @@ def main(outdir: Path = Path("tmp/lr"), reduction_scale: float = 4.0, subset: st
         lr_img_width = int(hr_img_width // reduction_scale)
         lr_img = F.resize(hr_img, size=[lr_img_height, lr_img_width], interpolation=_interpolation_mode[mode])
         pil_lr_img = F.to_pil_image(lr_img)
-        if not (outdir / mode).is_dir():
-            (outdir / mode).mkdir(parents=True, exist_ok=True)
-
-        pil_lr_img.save(outdir / mode / image_path.name)
+        pil_lr_img.save(outdir / image_path.name)
 
 
 if __name__ == "__main__":
