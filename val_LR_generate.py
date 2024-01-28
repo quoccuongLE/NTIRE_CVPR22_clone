@@ -7,10 +7,11 @@ from PIL import Image
 import torch
 import torchvision.transforms.functional as F
 from torchvision.transforms import InterpolationMode
-
-# from torchvision.transforms import v2
+from torchvision.transforms import v2
 
 import torch.nn.functional
+
+from utils.utils_image import imresize
 
 dsdir = os.environ.get("DSDIR")
 
@@ -39,12 +40,16 @@ def main(outdir: str = "tmp/lr", reduction_scale: float = 4.0, subset: str = "va
 
     for image_path in dataset.iterdir():
         pil_hr_img = Image.open(image_path)
-        hr_img = F.to_tensor(pil_hr_img)
+        hr_img = F.to_tensor(pil_hr_img).float()
         hr_channels, hr_img_height, hr_img_width = hr_img.shape
         lr_channels = hr_channels
         lr_img_height = int(hr_img_height // reduction_scale)
         lr_img_width = int(hr_img_width // reduction_scale)
-        lr_img = F.resize(hr_img, size=[lr_img_height, lr_img_width], interpolation=_interpolation_mode[mode])
+        if mode == "bicubic":
+            lr_img = imresize(hr_img, scale=1. / reduction_scale)
+        else:
+            lr_img = v2.Resize(size=[lr_img_height, lr_img_width], interpolation=_interpolation_mode[mode])(hr_img)
+
         pil_lr_img = F.to_pil_image(lr_img)
         pil_lr_img.save(outdir / image_path.name)
 
